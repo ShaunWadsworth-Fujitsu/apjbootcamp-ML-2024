@@ -1,11 +1,11 @@
 # Databricks notebook source
 # MAGIC %md-sandbox
 # MAGIC # Model Serving and Model Registry
-# MAGIC 
+# MAGIC
 # MAGIC <img src="https://github.com/QuentinAmbard/databricks-demo/raw/main/product_demos/mlops-end2end-flow-4.png" width="1200">
-# MAGIC 
+# MAGIC
 # MAGIC One of the primary challenges among data scientists and ML engineers is the absence of a central repository for models, their versions, and the means to manage them throughout their lifecycle.  
-# MAGIC 
+# MAGIC
 # MAGIC [The MLflow Model Registry](https://docs.databricks.com/applications/mlflow/model-registry.html) addresses this challenge and enables members of the data team to:
 # MAGIC <br><br>
 # MAGIC * **Discover** registered models, current stage in model development, experiment runs, and associated code with a registered model
@@ -24,17 +24,21 @@
 
 # MAGIC %md
 # MAGIC ## Let's manually grab our Experiment ID from earlier
-# MAGIC 
+# MAGIC
 # MAGIC Steps: 
 # MAGIC 1. Click Experiments on the LHS of the pane
 # MAGIC - Navigate to the notebook where the runs are recorded from earlier
 # MAGIC - Copy the Experiment ID from the top of the page and populate below 👇 
-# MAGIC 
+# MAGIC
 # MAGIC > Note: we could also easily use mlflow APIs to do this programmatically
 
 # COMMAND ----------
 
-experiment_id = <>
+from mlflow.tracking import MlflowClient
+client = MlflowClient()
+results = client.get_experiment_by_name("/Users/shaun.wadsworth@fujitsu.com/Shaun-DB-Bootcamp-ML")
+experiment_id = results.experiment_id
+display(experiment_id)
 
 # COMMAND ----------
 
@@ -48,15 +52,15 @@ all_runs.head()
 
 # MAGIC %md-sandbox
 # MAGIC ### How to Use the Model Registry
-# MAGIC 
+# MAGIC
 # MAGIC <div style="float:right">
 # MAGIC   <img src="https://ajmal-field-demo.s3.ap-southeast-2.amazonaws.com/apj-sa-bootcamp/model_registry.png" width="1000px">
 # MAGIC </div>
-# MAGIC 
+# MAGIC
 # MAGIC Typically, data scientists who use MLflow will conduct many experiments, each with a number of runs that track and log metrics and parameters. During the course of this development cycle, they will select the best run within an experiment and register its model with the registry.  Think of this as **committing** the model to the registry, much as you would commit code to a version control system.  
-# MAGIC 
+# MAGIC
 # MAGIC The registry defines several model stages: `None`, `Staging`, `Production`, and `Archived`. Each stage has a unique meaning. For example, `Staging` is meant for model testing, while `Production` is for models that have completed the testing or review processes and have been deployed to applications. 
-# MAGIC 
+# MAGIC
 # MAGIC Users with appropriate permissions can transition models between stages.
 
 # COMMAND ----------
@@ -108,13 +112,13 @@ displayHTML(f"<h4>This model will by default be in the version None stage. Check
 
 # MAGIC %md-sandbox
 # MAGIC ## Let's now promote our model to production
-# MAGIC 
+# MAGIC
 # MAGIC <div style="float:right">
 # MAGIC   <img src="https://ajmal-field-demo.s3.ap-southeast-2.amazonaws.com/apj-sa-bootcamp/promote_model.gif" width="700px">
 # MAGIC </div>
-# MAGIC 
+# MAGIC
 # MAGIC Now go ahead and observe the model in the Model Registry:
-# MAGIC 
+# MAGIC
 # MAGIC 0. Ensure that you are in the Machine Learning persona on the LHS
 # MAGIC - Click "Models" on the left sidebar
 # MAGIC - Find your Model (if your username is **```"yan_moiseev"```**, you should see it as **````orange_experiment_yan_moiseev````**)
@@ -185,10 +189,10 @@ display(spark_df.withColumn("prediction", predict_udf(*features)))
 # COMMAND ----------
 
 # MAGIC %md-sandbox
-# MAGIC 
+# MAGIC
 # MAGIC ## Let's now register this model for real time inference
 # MAGIC <br>
 # MAGIC <div>
 # MAGIC <img src="https://cms.databricks.com/sites/default/files/inline-images/db-498-blog-imgs-1.png" >
-# MAGIC 
+# MAGIC
 # MAGIC </div>

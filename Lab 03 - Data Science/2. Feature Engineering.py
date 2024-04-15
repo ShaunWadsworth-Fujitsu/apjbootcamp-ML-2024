@@ -1,11 +1,11 @@
 # Databricks notebook source
 # MAGIC %md-sandbox
 # MAGIC # Feature Engineering
-# MAGIC 
+# MAGIC
 # MAGIC <!-- https://databricks.com/wp-content/uploads/2021/07/Feature-Engineering-At-Scale-blog-img-2.png -->
-# MAGIC 
+# MAGIC
 # MAGIC We will now make use of our learnings from our exploratory analysis and build our feature engineering pipeline. 
-# MAGIC 
+# MAGIC
 # MAGIC We will address a typical data science workflow which can include addressing missing values, scaling, discretization, encoding categorical features, etc. We will also make use of specific business knowledge to create potentially predictive features.
 
 # COMMAND ----------
@@ -29,7 +29,7 @@ raw_data = data.pandas_api()
 # MAGIC %md
 # MAGIC ## We can create a new feature from the pH value
 # MAGIC From chemistry, we know that pH approximates the concentration of hydrogen ions in a solution. We are going to use this information to include a new (potentially predictive) feature into our model: 
-# MAGIC 
+# MAGIC
 # MAGIC $$\\text{pH} = - \\text{log}_{10} ( h_{\\text{concentration}} )$$
 # MAGIC $$ \Rightarrow h_{\\text{concentration}} = 10^{\\text{pH}} $$
 
@@ -74,17 +74,17 @@ plt.show()
 
 # MAGIC %md-sandbox
 # MAGIC # Register Features into the Feature Store 
-# MAGIC 
+# MAGIC
 # MAGIC We now register our features into the feature store so others in APJuice can reuse our features for other experiments! The feature store will also make inference easier as the Delta table will record our transformations and reapply these during inference. This applies to both batch and streaming inference. Orange (🍊) you glad you chose Delta!
-# MAGIC 
+# MAGIC
 # MAGIC A centralised feature store also allows for discoverability and reusability of our feature across our organization, increasing team efficiency of data scientists. The feature store can bring traceability and governance in your deployments, knowing which model is dependent of which set of features.
-# MAGIC 
+# MAGIC
 # MAGIC <!-- 
 # MAGIC <img src="https://github.com/QuentinAmbard/databricks-demo/raw/main/product_demos/mlops-end2end-flow-feature-store.png" style="float:right" width="500" />
 # MAGIC  -->
 # MAGIC Once our features are ready, we'll save them in Databricks Feature Store. Under the hood, features store are backed by a Delta Lake table.
-# MAGIC 
-# MAGIC 
+# MAGIC
+# MAGIC
 # MAGIC <div style="text-align:bottom">
 # MAGIC   <img src="https://ajmal-field-demo.s3.ap-southeast-2.amazonaws.com/apj-sa-bootcamp/feature_store.png" width="1100px">
 # MAGIC </div>
@@ -109,3 +109,44 @@ fs.create_table(
 displayHTML("""
   <h3>Check out the <a href="/#feature-store/{}.features_oj_prediction_experiment">feature store</a> to see where our features are stored.</h3>
 """.format(DATABASE_NAME))
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Your Turn !
+# MAGIC Add a new feature to the dataset for vitamin_c_enzyme_ratio = log (vitamin C levels / enzyme levels / 100)
+# MAGIC
+
+# COMMAND ----------
+
+# First of all, calculate the new feature
+# Enter your code here.
+raw_data = raw_data.assign(vitamin_c_enzyme_ratio=lambda x: np.log(x["vitamin_c"]/x["enzymes"]/100))
+
+# COMMAND ----------
+
+# Now lets plot the feature using Seabourne as before. How does that look?
+# Enter your code here.
+sns.displot(raw_data["vitamin_c_enzyme_ratio"].to_numpy())
+
+plt.ylabel("Count")
+plt.xlabel("Vitamin C Enzyme ratio (no units)")
+plt.show()
+
+# COMMAND ----------
+
+# Now we need to add the new feature to our feature store table.
+# Enter your code here.
+# Hint: You will need to use the Feature Store write_table command in merge mode.
+#       (ref: https://learn.microsoft.com/en-us/azure/databricks/machine-learning/feature-store/feature-tables#update-only-specific-rows-in-a-feature-table)
+fs.write_table(
+  name=f"{DATABASE_NAME}.features_oj_prediction_experiment",
+  df = raw_data.to_spark(),
+  mode = 'merge'
+)
+
+
+# COMMAND ----------
+
+#Lets check it was added ok
+display(fs.read_table(f"{DATABASE_NAME}.features_oj_prediction_experiment"))

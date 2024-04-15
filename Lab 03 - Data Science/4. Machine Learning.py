@@ -1,16 +1,16 @@
 # Databricks notebook source
 # MAGIC %md-sandbox
-# MAGIC 
+# MAGIC
 # MAGIC # Let the Machines Learn! 
-# MAGIC 
+# MAGIC
 # MAGIC <div style="float:right">
 # MAGIC   <img src="https://ajmal-field-demo.s3.ap-southeast-2.amazonaws.com/apj-sa-bootcamp/machine_learning_model.png" width="1000px">
 # MAGIC </div>
-# MAGIC 
-# MAGIC 
+# MAGIC
+# MAGIC
 # MAGIC We are going to train an a model to predict the quality of an orange given the chemical makeup of the orange. This will help us find the key indicators of quality.
 # MAGIC The key indicators can then be used engineer a great orange! We will begin as follows:
-# MAGIC 
+# MAGIC
 # MAGIC 1. The feature set will then be uploaded to the Feature Store.
 # MAGIC 2. We will pre-process our numerical and categorial column(s).
 # MAGIC 3. We will train multiple models from our ML runtime and assess the best model.
@@ -85,20 +85,20 @@ validation_data = validation_set.load_df().toPandas()
 # COMMAND ----------
 
 # MAGIC %md-sandbox
-# MAGIC 
+# MAGIC
 # MAGIC ## Machine Learning Pipeline
 # MAGIC We will apply different transformations for numerical and categorical columns. 
-# MAGIC 
-# MAGIC 
+# MAGIC
+# MAGIC
 # MAGIC <div style="float:right">
 # MAGIC   <img src="https://www.pngkit.com/png/full/37-376558_pipe-8-bit-mario.png" width="800px">
 # MAGIC </div>
-# MAGIC 
-# MAGIC 
+# MAGIC
+# MAGIC
 # MAGIC For numerical columns, we will:
 # MAGIC - Impute missing values with the mean of the column.
 # MAGIC - Scale numerical values to 0 mean and unit variance to reduce the impact of larger values.
-# MAGIC 
+# MAGIC
 # MAGIC For categorical columns:
 # MAGIC - Impute missing values with empty strings
 # MAGIC - One hot encode the type of orange
@@ -204,32 +204,32 @@ rf_model
 
 # MAGIC %md-sandbox
 # MAGIC ## Databricks uses mlflow for experiment tracking, logging, and production
-# MAGIC 
+# MAGIC
 # MAGIC <div style="float:right">
 # MAGIC   <img src="https://databricks.com/wp-content/uploads/2020/06/blog-mlflow-model-1.png" width="1000px">
 # MAGIC </div>
-# MAGIC 
+# MAGIC
 # MAGIC We are going to use the sklearn 'flavour' in mlflow. A couple of things to note about Mlflow:
-# MAGIC 
+# MAGIC
 # MAGIC - Mlflow is going to help orchestrate the end-to-end process for our machine learning use-case.
 # MAGIC - **runs**: MLflow Tracking is organized around the concept of runs, which are executions of some piece of data science code.
 # MAGIC - **experiments**: MLflow allows you to group runs under experiments, which can be useful for comparing runs intended to tackle a particular task.
-# MAGIC 
+# MAGIC
 # MAGIC 👇 We are going to create an experiment to store our machine learning model runs
 
 # COMMAND ----------
 
 # MAGIC %md-sandbox
-# MAGIC 
+# MAGIC
 # MAGIC ## Create an Experiment Manually 👩‍🔬
-# MAGIC 
+# MAGIC
 # MAGIC <div style="float:right">
 # MAGIC   <img src="https://ajmal-field-demo.s3.ap-southeast-2.amazonaws.com/apj-sa-bootcamp/create_experiment.gif" width="800px">
 # MAGIC </div>
-# MAGIC 
-# MAGIC 
+# MAGIC
+# MAGIC
 # MAGIC We are now going to manually create an experiment using our UI. To do this, we will follow the following steps:
-# MAGIC 
+# MAGIC
 # MAGIC 0. Ensure that you are in the Machine Learning persona by checking the LHS pane and ensuring it says **Machine Learning**.
 # MAGIC - Click on the ```Experiments``` button.
 # MAGIC - Click the "Create an AutoML Experiment" arrow dropdown
@@ -239,15 +239,20 @@ rf_model
 # COMMAND ----------
 
 # DBTITLE 1,We create a blank experiment to log our runs to
-experiment_id = <>
+from mlflow.tracking import MlflowClient
+client = MlflowClient()
+results = client.get_experiment_by_name("/Users/shaun.wadsworth@fujitsu.com/Shaun-DB-Bootcamp-ML")
+experiment_id = results.experiment_id
+display(experiment_id)
 
 # For future reference, of course, you can use the mlflow APIs to create and set the experiment
-
+# import mlflow
 # experiment_name = "Orange Quality Prediction"
 # experiment_path = os.path.join(PROJECT_PATH, experiment_name)
 # experiment_id = mlflow.create_experiment(experiment_path)
-
 # mlflow.set_experiment(experiment_path)
+# experiment_id = mlflow.get_experiment()
+
 
 # COMMAND ----------
 
@@ -293,16 +298,16 @@ with mlflow.start_run(run_name="random_forest_pipeline",
 # COMMAND ----------
 
 # MAGIC %md-sandbox
-# MAGIC 
+# MAGIC
 # MAGIC <div style="float:right">
 # MAGIC   <img src="https://ajmal-field-demo.s3.ap-southeast-2.amazonaws.com/apj-sa-bootcamp/shap_logged.gif" width="600px">
 # MAGIC </div>
-# MAGIC 
-# MAGIC 
+# MAGIC
+# MAGIC
 # MAGIC ## Logging other artefacts in runs
-# MAGIC 
+# MAGIC
 # MAGIC We have flexibility over the artefacts we want to log. By logging artefacts with runs we have examine the quality of fit to better determine if we have overfit or if we need to retrain, etc. These artefacts also help with reproducibility.
-# MAGIC 
+# MAGIC
 # MAGIC As an example, let's log the partial dependence plot from SHAP with a single model run. 👇
 
 # COMMAND ----------
@@ -370,16 +375,83 @@ with mlflow.start_run(run_name="random_forest_pipeline_2", experiment_id=experim
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ## Your Turn!
+# MAGIC Lets try creating a new processing pipeline that runs a different model on the data
+
+# COMMAND ----------
+
+# First, let's Create a new pipeline. We can reuse some components of our existing p
+new_preprocessing_pipeline = []
+
+# TODO: add the categorical columns pipeline
+new_preprocessing_pipeline.append(("process_categorical", one_hot_pipeline, categorical_features))
+
+# TODO: add the numerical columns pipeline
+new_preprocessing_pipeline.append(("process_numerical", numerical_pipeline, numerical_features))
+
+# TODO: add the remaining columns pipeline
+new_preprocessor = ColumnTransformer(new_preprocessing_pipeline, remainder="passthrough", sparse_threshold=0)
+
+
+# COMMAND ----------
+
+# Add the classifier to the pipeline. We will use a Logistic Regression classifier
+from sklearn.linear_model import LogisticRegression
+from sklearn import set_config
+from sklearn.pipeline import Pipeline
+
+set_config(display="diagram")
+
+## TODO: Create a model called lr_model. Use the LogisticRegression classifier. We don't need to set any parameters for this initial example
+classifier = LogisticRegression()
+lr_model = Pipeline([
+    ("preprocessor", new_preprocessor),
+    ("classifier", classifier),
+])
+# Lets have a look at our pipeline
+lr_model
+
+
+# COMMAND ----------
+
+# Let's train our Logistic Regression Classifier and get the validation metrics
+import mlflow
+import pandas as pd
+
+# Enable automatic logging of input samples, metrics, parameters, and models
+mlflow.sklearn.autolog(log_input_examples=True, silent=True)
+
+with mlflow.start_run(run_name="logistic_regression_pipeline",
+                      experiment_id=experiment_id) as mlflow_run:
+
+    # TODO: Fit our estimator
+    lr_model.fit(X_training, y_training)
+    
+    # TODO: Log metrics for the validation set
+    mlflow.sklearn.log_model(lr_model, "lr_model")
+    model_uri = mlflow.get_artifact_uri("lr_model")
+    display(model_uri)
+    results = mlflow.evaluate(model=model_uri, data=validation_dataset, 
+                               targets='quality', model_type="classifier",
+                               evaluator_config = {'metric_prefix':"val_"})
+    
+    # Need to log model signatures, otherwise it will fail when using spark_udf for the distributed inference
+    signature = infer_signature(X_training, lr_model.predict(X_training))
+
+
+# COMMAND ----------
+
 # MAGIC %md-sandbox
-# MAGIC 
+# MAGIC
 # MAGIC ## Search best hyper parameters with HyperOpt (Bayesian optimization) accross multiple nodes
 # MAGIC <div style="float:right"><img src="https://quentin-demo-resources.s3.eu-west-3.amazonaws.com/images/bayesian-model.png" style="height: 330px"/></div>
 # MAGIC Our model performs well but we want to run hyperparameter optimisation across our parameter search space. We will use HyperOpt to do so. For fun, we're going to try an XGBoost model here.
-# MAGIC 
+# MAGIC
 # MAGIC This model is a good start, but now we want to try multiple hyper-parameters and search the space rather than a fixed size.
-# MAGIC 
+# MAGIC
 # MAGIC GridSearch could be a good way to do it, but not very efficient when the parameter dimension increase and the model is getting slow to train due to a massive amount of data.
-# MAGIC 
+# MAGIC
 # MAGIC HyperOpt search accross your parameter space for the minimum loss of your model, using Baysian optimization instead of a random walk
 
 # COMMAND ----------

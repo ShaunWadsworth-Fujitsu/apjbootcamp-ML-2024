@@ -1,16 +1,16 @@
 # Databricks notebook source
 # MAGIC %md-sandbox
-# MAGIC 
+# MAGIC
 # MAGIC # Machine Learning Introduction on Databricks
-# MAGIC 
+# MAGIC
 # MAGIC We start by understanding the business problem before translating to a technical problem. 
-# MAGIC 
+# MAGIC
 # MAGIC ## The Business Problem
 # MAGIC APJuice is really interested in having the best quality ingredients for their juices. Their most popular juice flavours are Oranges. You might be thinking, "Simple! How different could oranges really be?" Well, actually, there's over 20 varieties of oranges and even more flavour profiles. The key indicators for flavour profiles of an orange are: Level of **acidity**, amount of **enzymes**, **citric acid** concentration, **sugar content**, **chlorides**, the aroma (**Octyl Acetate**), and amount of **sulfur dioxide**.
-# MAGIC 
+# MAGIC
 # MAGIC Clearly the flavour profile of an orange is quite complex. Additionally, easy of these variables that determine the taste have **differing marginal cost**. For example, increasing the amount of Octyl Acetate is **more expensive** than the amount of sugar. 
-# MAGIC 
-# MAGIC 
+# MAGIC
+# MAGIC
 # MAGIC <div style="text-align:center">
 # MAGIC   <img src="https://ajmal-field-demo.s3.ap-southeast-2.amazonaws.com/apj-sa-bootcamp/orange_classification.png" width="1000px">
 # MAGIC </div>
@@ -19,18 +19,18 @@
 
 # MAGIC %md
 # MAGIC APJuice are quite scientific and follow the Popperian view of science. Additionally, they are willing to accept that if a model can be derived that can model this relationship then the hypothesis has been proven true.
-# MAGIC 
+# MAGIC
 # MAGIC > **Hypothesis statement:** do the chemical properties influence the taste of an orange? If so, what is the best combination of chemical properties (financially) such that the quality is high but the cost is low?
-# MAGIC 
+# MAGIC
 # MAGIC As a starting point, APJuice collected some data from customers and what they thought of the quality of some oranges. We will test the hypothesis by training a machine learning model to predict quality scores from respondents. Let's start with some exploratory data analysis.
 
 # COMMAND ----------
 
 # MAGIC %md 
 # MAGIC ## Exploratory Data Analysis
-# MAGIC 
+# MAGIC
 # MAGIC Before diving into modelling, we want to analyse our collected data - this will inform our feature engineering and modelling processes. Some examples of questions we are looking to address:
-# MAGIC 
+# MAGIC
 # MAGIC 1. Are there any missing values: if so we'll need to impute them.
 # MAGIC - Are there any highly correlated features? We can consolidate our predictors if so.
 # MAGIC - Low/0 variance features: constant values won't be great predictors
@@ -67,6 +67,11 @@ display(collected_data)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ### Your Turn !
+
+# COMMAND ----------
+
 # DBTITLE 1,Your turn: have a play around! 🥳
 display(collected_data)
 
@@ -97,6 +102,28 @@ fig.update_layout(font_family="Arial",
                   font=dict(size=20))
 
 fig.show()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC We want to predict the quality column, which is a categorial variable with two values.
+# MAGIC
+# MAGIC This makes our problem a binary classifier. Lets have a look at the values.
+
+# COMMAND ----------
+
+import pyspark.sql.functions as F
+import plotly.express as px
+import plotly.io as pio
+import numpy as np
+
+targets = ['Good', 'Bad']
+data_targets = {t: collected_data.filter(F.col('quality')==t) for t in targets}
+
+counts = {t: data_targets[t].count() for t in targets}
+collected_data.crosstab("quality","type").show()
+
+
 
 # COMMAND ----------
 
