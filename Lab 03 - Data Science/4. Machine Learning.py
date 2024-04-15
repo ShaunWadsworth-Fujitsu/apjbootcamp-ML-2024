@@ -385,13 +385,10 @@ with mlflow.start_run(run_name="random_forest_pipeline_2", experiment_id=experim
 new_preprocessing_pipeline = []
 
 # TODO: add the categorical columns pipeline
-new_preprocessing_pipeline.append(("process_categorical", one_hot_pipeline, categorical_features))
 
 # TODO: add the numerical columns pipeline
-new_preprocessing_pipeline.append(("process_numerical", numerical_pipeline, numerical_features))
 
 # TODO: add the remaining columns pipeline
-new_preprocessor = ColumnTransformer(new_preprocessing_pipeline, remainder="passthrough", sparse_threshold=0)
 
 
 # COMMAND ----------
@@ -404,11 +401,7 @@ from sklearn.pipeline import Pipeline
 set_config(display="diagram")
 
 ## TODO: Create a model called lr_model. Use the LogisticRegression classifier. We don't need to set any parameters for this initial example
-classifier = LogisticRegression()
-lr_model = Pipeline([
-    ("preprocessor", new_preprocessor),
-    ("classifier", classifier),
-])
+
 # Lets have a look at our pipeline
 lr_model
 
@@ -426,18 +419,10 @@ with mlflow.start_run(run_name="logistic_regression_pipeline",
                       experiment_id=experiment_id) as mlflow_run:
 
     # TODO: Fit our estimator
-    lr_model.fit(X_training, y_training)
     
     # TODO: Log metrics for the validation set
-    mlflow.sklearn.log_model(lr_model, "lr_model")
-    model_uri = mlflow.get_artifact_uri("lr_model")
-    display(model_uri)
-    results = mlflow.evaluate(model=model_uri, data=validation_dataset, 
-                               targets='quality', model_type="classifier",
-                               evaluator_config = {'metric_prefix':"val_"})
     
-    # Need to log model signatures, otherwise it will fail when using spark_udf for the distributed inference
-    signature = infer_signature(X_training, lr_model.predict(X_training))
+    # TODO: Log model signatures
 
 
 # COMMAND ----------
